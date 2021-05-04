@@ -87,3 +87,4 @@ def indiv_harms(coeffs=[[0]], radius=1):
         
     return eigenfields
 indies = indiv_harms([[0],[1,0,2]])
+draw_field(indies)
