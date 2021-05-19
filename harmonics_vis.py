@@ -1,4 +1,4 @@
-
+#%%
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
@@ -9,10 +9,20 @@ from scipy.special import sph_harm
 ###                                           ###
 ### The field can be manipulated through the  ###
 ### choice of coefficients in this list       ###
-### (Under construction, but that's the idea) ###
+### e.g. C(l=2, m=-1) = coeffs[2][2]          ###
 #################################################
-coeffs = [[0],[200 + 200j,0]]
+
+coeffs = [[0],[1,1,1],[0,0,0,0,0]]
 ext_coeffs =[[0]]
+#%%
+#################################################
+#################################################
+
+# N.B. To comply with scipy's convention, I follow this convention:
+# (theta, phi)                     # (0,0)
+#  N,S,E,W :     (pi/2, -pi) #         # (pi/2, pi)
+#                         (pi, 0) #
+################################################
 
 world_img = mpimg.imread("./worldmap.png")
 y_ind, x_ind = world_img.shape[0], world_img.shape[1]
@@ -21,26 +31,33 @@ def sp_ct(theta, phi):
     x_proj = np.sin(theta)*(np.sin(phi)*x_ind/2)+(x_ind/2)
     y_proj = (np.cos(theta)+1)*(y_ind/2)
     return (x_proj, y_proj)
-
+#%%
 def ct_sp(x,y):
-    theta = np.arccos(2*y/y_ind)    
-    if (np.abs((2*x/x_ind-1)/np.sin(theta)) <= 1):
-        phi = np.arcsin((2*x/x_ind-1)/np.sin(theta))
+    # Certainly the most difficult part of the project!
+    x_hat = 2*x/x_ind - 1
+    y_hat = -2*y/y_ind + 1
+    
+    theta = np.arccos(y_hat)
+    if (np.abs(y_hat) == 1) and (x == int(x_ind/2)):
+        phi = 0 
+    elif ((x_hat**2 + y_hat**2) <= 1):
+        phi = 2*np.arcsin(x_hat)/(np.abs(np.sin(theta)))
     else:
         phi = np.nan
     return(theta, phi)
 
+#%%
 def show_field(field=np.zeros((y_ind,x_ind))):
     fig = plt.imshow(world_img)
     test_line = (np.zeros(10), np.linspace(0,np.pi,10))
-    plt.imshow(field, alpha=0.2)
+    plt.imshow(field, alpha=0.8, cmap='gray', vmin=np.min(field), vmax=np.max(field), interpolation="none")
     fig.axes.get_xaxis().set_visible(False)
     fig.axes.get_yaxis().set_visible(False)
     plt.show()
 
 def show_point(pointx, pointy):
     fig = plt.imshow(world_img)
-    plt.scatter(pointx, pointy, s=2)
+    plt.scatter(pointx, pointy, s=5)
     plt.show()
 
 def coeff_harm(theta, phi, coeffs=[[0]], radius=1):
@@ -76,14 +93,36 @@ def indiv_harms(coeffs=[[0]], radius=1):
         for m_i in range(len(coeffs[l])):
             m = m_i - l
             print(f" l: {l} || m: {m}")
-            field = np.zeros((y_ind,x_ind))
+            field = np.zeros((y_ind, x_ind))
             for j in range(x_ind):
+                if coeffs[l][m_i] == 0:
+                    continue
                 for k in range (y_ind):
                     x = j
-                    y = k - int(y_ind/2)
+                    y = k
                     theta, phi = ct_sp(x,y)
-                    field[k,j] = radius*(-1*l-1)*coeffs[l][m_i]*sph_harm((m),l,theta,phi)
-                    eigenfields[l].append(field)
+                    field[k,j] = np.real(radius*(-1*l-1)*coeffs[l][m_i]*sph_harm(m,l, phi,theta))
+            np.nan_to_num(field, copy=False)
+            eigenfields[l].append(field)
         
     return eigenfields
-indies = indiv_harms([[0],[1,0,2]])
+
+def generate_frame(eigenfields, radius=1):
+    net_field = np.zeros((y_ind,x_ind))
+    for l in range(len(eigenfields)):
+        for m in range(len(eigenfields[l])):
+            net_field += radius ** (-1*l-1)
+    return net_field
+
+indies1 = indiv_harms(coeffs)
+#%%
+indies2 = indiv_harms([[0], [1j,1j,1]])
+#%%
+show_field(indies1[1][0])
+show_field(indies2[1][2])
+
+# %%
+def tester(x,y):
+    #show_point(x,y)
+    return(ct_sp(x,y))
+# %%
