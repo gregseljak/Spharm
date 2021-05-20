@@ -24,7 +24,7 @@ ext_coeffs =[[0]]
 # without having to recompute the fields:        #
 #                                                #
 # >>> FG.coeffs = [[0.4], [0+2j,0.1,1]]          #
-# >>> FG.see_frame()                             #
+# >>> FG.show_frame()                             #
 # >>> FG.depth_movie()                           #
 ##################################################
 #
@@ -36,7 +36,9 @@ ext_coeffs =[[0]]
 #
 ################################################
 
-
+def main():
+    FG = FieldGenerator()
+    FG.show_movie()
 
 class FieldGenerator(object):
 
@@ -110,6 +112,10 @@ class FieldGenerator(object):
         self.eigenfields = eigenfields
 
     def generate_frame(self, radius=1, new_coeffs=False):
+        """
+        returns a complex np matrix of harmonics at specified
+        radius (default = 1) and coefficients (default = self.coeffs)
+        """
         localc = self.coeffs
         if new_coeffs != False:
             localc = new_coeffs
@@ -119,8 +125,8 @@ class FieldGenerator(object):
                 net_field += ((radius ** (-1*l-1))*localc[l][m]*self.eigenfields[l][m])
         return net_field
     
-    def see_frame(self):
-        self.show_field(self.generate_frame())
+    def show_frame(self, radius=1):
+        self.show_field(self.generate_frame(radius))
 
     def show_movie(self):
         self.depth_movie(20)
@@ -138,7 +144,6 @@ class FieldGenerator(object):
         anime = animation.FuncAnimation(f0, updateData, blit=False, frames=self.film_reel.shape[0], interval=1000, repeat=True)
         #f0.tight_layout()
         plt.show()
-
-FG = FieldGenerator()
-FG.show_movie()
-#%%
+        plt.close()
+if __name__ == "__main__":
+    main()
