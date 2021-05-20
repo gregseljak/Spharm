@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 from scipy.special import sph_harm
+import matplotlib.animation as animation
 
 #################################################
 ###     ------     USER README    ------      ###
@@ -11,13 +12,13 @@ from scipy.special import sph_harm
 ### choice of coefficients in this list       ###
 ### e.g. C(l=2, m=-1) = coeffs[2][2]          ###
 #################################################
-
-coeffs = [[0],[1,1,1],[0,0,0,0,0]]
+coeffs = [[1]]
+#coeffs = [[0],[1,1,1],[0,0,0,0,0]]
 ext_coeffs =[[0]]
 #%%
 ##################################################
 # You don't need to rerun the program each time! #
-# Run this is in interactive console:            #
+# Run this file is in interactive console:       #
 #   $python3 -i harmonics_vis.py                 #
 #                                                #
 # Now you can manipulate and re-run the visuals  #
@@ -28,17 +29,15 @@ ext_coeffs =[[0]]
 # >>> FG.depth_movie()                           #
 ##################################################
 #
-# N.B. To comply with scipy's convention, I follow this convention:
+# N.B. To comply with scipy's convention, I follow 
+# this coordinate system :
 # (theta, phi)                     # (0,0)
 #  N,S,E,W :     (pi/2, -pi) #         # (pi/2, pi)
 #                         (pi, 0) #
 #
 ################################################
 
-def main():
-    FG = FieldGenerator()
-    FG.show_field(FG.generate_frame())
-    return FG
+
 
 class FieldGenerator(object):
 
@@ -47,6 +46,13 @@ class FieldGenerator(object):
         self.y_ind, self.x_ind = self.world_img.shape[0], self.world_img.shape[1]
         self.coeffs = coeffs
         self.generate_eigenfields()
+
+    def depth_movie(self, nb_frames):
+        radii = np.linspace(0.5, 1.5, nb_frames)
+        film_reel = np.zeros((nb_frames, self.y_ind, self.x_ind), dtype=complex)
+        for i in range(nb_frames):
+            film_reel[i,:,:] = self.generate_frame(radii[i])
+        self.film_reel = film_reel    
 
     def ct_sp(self, x,y):
         # Certainly the most difficult part of the project!
@@ -63,8 +69,9 @@ class FieldGenerator(object):
         return(theta, phi)
 
     def show_field(self, field):
+        realfield = np.real(field)
         fig = plt.imshow(self.world_img)
-        plt.imshow(field, alpha=0.8, cmap='gray', vmin=np.min(field), vmax=np.max(field), interpolation="none")
+        plt.imshow(realfield, alpha=0.8, cmap='gray', vmin=np.min(realfield), vmax=np.max(realfield), interpolation="none")
         fig.axes.get_xaxis().set_visible(False)
         fig.axes.get_yaxis().set_visible(False)
         plt.show()
@@ -102,26 +109,30 @@ class FieldGenerator(object):
         self.eigenfields = eigenfields
 
     def generate_frame(self, radius=1):
-        net_field = np.zeros((self.y_ind, self.x_ind))
+        net_field = np.zeros((self.y_ind, self.x_ind), dtype=complex)
         for l in range(len(self.coeffs)):
             for m in range(len(self.coeffs[l])):
-                net_field += np.real((radius ** (-1*l-1))*coeffs[l][m]*self.eigenfields[l][m])
+                net_field += ((radius ** (-1*l-1))*coeffs[l][m]*self.eigenfields[l][m])
         return net_field
     
     def see_frame(self):
         self.show_field(self.generate_frame())
-FG = main()
 
-"""
-indies1 = indiv_harms(coeffs)
-#%%
-indies2 = indiv_harms([[0], [1j,1j,1]])
-#%%
-show_field(indies1[1][0])
-show_field(indies2[1][2])
+    def show_movie(self):
+        self.depth_movie(20)
+        f0, ax = plt.subplots()
+        fig = ax.imshow(self.world_img)
+        carte = ax.imshow(np.real(self.film_reel[0,:,:]), alpha=0.8, cmap='gray', vmin=np.min(np.real(self.film_reel)), vmax=np.max(np.real(self.film_reel)), interpolation="none")
+        
+        def updateData(frame):
+            carte.set_array(np.real(self.film_reel[frame,:,:]))
+            print(frame)
+            return carte
 
-# %%
-def tester(x,y):
-    #show_point(x,y)
-    return(ct_sp(x,y))
-"""
+        anime = animation.FuncAnimation(f0, updateData, blit=False, frames=self.film_reel.shape[0], interval=1000/12, repeat=True)
+        f0.tight_layout()
+        plt.show()
+
+FG = FieldGenerator()
+FG.show_movie()
+#%%
