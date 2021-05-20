@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 from scipy.special import sph_harm
 import matplotlib.animation as animation
-
+from matplotlib import cm
 #################################################
 ###     ------     USER README    ------      ###
 ###                                           ###
@@ -12,8 +12,7 @@ import matplotlib.animation as animation
 ### choice of coefficients in this list       ###
 ### e.g. C(l=2, m=-1) = coeffs[2][2]          ###
 #################################################
-coeffs = [[1]]
-#coeffs = [[0],[1,1,1],[0,0,0,0,0]]
+coeffs = [[0],[0,1,1],[0,0,0,0,2]]
 ext_coeffs =[[0]]
 #%%
 ##################################################
@@ -45,13 +44,15 @@ class FieldGenerator(object):
         self.world_img = mpimg.imread(imagepath)
         self.y_ind, self.x_ind = self.world_img.shape[0], self.world_img.shape[1]
         self.coeffs = coeffs
+        self.globalmax = 0
+        self.globalmin = 0
         self.generate_eigenfields()
 
     def depth_movie(self, nb_frames):
-        radii = np.linspace(0.5, 1.5, nb_frames)
+        self.radii = np.linspace(0.5, 1.5, nb_frames)
         film_reel = np.zeros((nb_frames, self.y_ind, self.x_ind), dtype=complex)
         for i in range(nb_frames):
-            film_reel[i,:,:] = self.generate_frame(radii[i])
+            film_reel[i,:,:] = self.generate_frame(self.radii[i])
         self.film_reel = film_reel    
 
     def ct_sp(self, x,y):
@@ -71,7 +72,7 @@ class FieldGenerator(object):
     def show_field(self, field):
         realfield = np.real(field)
         fig = plt.imshow(self.world_img)
-        plt.imshow(realfield, alpha=0.8, cmap='gray', vmin=np.min(realfield), vmax=np.max(realfield), interpolation="none")
+        plt.imshow(realfield, alpha=0.8, cmap='seismic', vmin=np.min(realfield), vmax=np.max(realfield), interpolation="none")
         fig.axes.get_xaxis().set_visible(False)
         fig.axes.get_yaxis().set_visible(False)
         plt.show()
@@ -108,11 +109,14 @@ class FieldGenerator(object):
                 eigenfields[l].append(field)
         self.eigenfields = eigenfields
 
-    def generate_frame(self, radius=1):
+    def generate_frame(self, radius=1, new_coeffs=False):
+        localc = self.coeffs
+        if new_coeffs != False:
+            localc = new_coeffs
         net_field = np.zeros((self.y_ind, self.x_ind), dtype=complex)
         for l in range(len(self.coeffs)):
             for m in range(len(self.coeffs[l])):
-                net_field += ((radius ** (-1*l-1))*coeffs[l][m]*self.eigenfields[l][m])
+                net_field += ((radius ** (-1*l-1))*localc[l][m]*self.eigenfields[l][m])
         return net_field
     
     def see_frame(self):
@@ -122,15 +126,17 @@ class FieldGenerator(object):
         self.depth_movie(20)
         f0, ax = plt.subplots()
         fig = ax.imshow(self.world_img)
-        carte = ax.imshow(np.real(self.film_reel[0,:,:]), alpha=0.8, cmap='gray', vmin=np.min(np.real(self.film_reel)), vmax=np.max(np.real(self.film_reel)), interpolation="none")
-        
+        fig.axes.get_xaxis().set_visible(False)
+        fig.axes.get_yaxis().set_visible(False)
+        carte = ax.imshow(np.real(self.film_reel[0,:,:]), alpha=0.8, cmap='seismic', vmin=np.min(np.real(self.film_reel)), vmax=np.max(np.real(self.film_reel)), interpolation="none")
+
         def updateData(frame):
             carte.set_array(np.real(self.film_reel[frame,:,:]))
-            print(frame)
+            ax.set_title(f" Radius = {int(6371*self.radii[frame])} / 6371 km")
             return carte
 
-        anime = animation.FuncAnimation(f0, updateData, blit=False, frames=self.film_reel.shape[0], interval=1000/12, repeat=True)
-        f0.tight_layout()
+        anime = animation.FuncAnimation(f0, updateData, blit=False, frames=self.film_reel.shape[0], interval=1000, repeat=True)
+        #f0.tight_layout()
         plt.show()
 
 FG = FieldGenerator()
