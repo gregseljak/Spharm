@@ -11,6 +11,8 @@ from matplotlib import cm
 ### The field can be manipulated through the  ###
 ### choice of coefficients in this list       ###
 ### e.g. C(l=2, m=-1) = coeffs[2][2]          ###
+###                                           ###
+########################## Greg Seljak, 2021  ###
 #################################################
 coeffs = [[0],[0,1,1],[0,0,0,0,2]]
 ext_coeffs =[[0]]
