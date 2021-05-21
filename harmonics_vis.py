@@ -14,9 +14,9 @@ from matplotlib import cm
 ###                                           ###
 ########################## Greg Seljak, 2021  ###
 #################################################
+
 coeffs = [[0],[0,1,1],[0,0,0,0,2]]
-ext_coeffs =[[0]]
-#%%
+
 ##################################################
 # You don't need to rerun the program each time! #
 # Run this file is in interactive console:       #
@@ -38,6 +38,7 @@ ext_coeffs =[[0]]
 #
 ################################################
 
+FG = None
 def main():
     FG = FieldGenerator()
     FG.show_movie()
