@@ -11,12 +11,12 @@ def f(x):
     return 1-x+2*x**2
 y = f(x)
 
-maxrange = 50
+maxrange = 100
 eigenfunctions = np.empty((maxrange, res))
 coeffs = np.empty(maxrange)
 for n in range(maxrange):
     eigenfunctions[n,:] = (np.sin(n*pi*x))
-    coeffs[n] = np.sum(eigenfunctions[n,:] * y/1000*np.pi/2)
+    coeffs[n] = np.sum(eigenfunctions[n,:] * y/res*2)
 
 f0, ax = plt.subplots(2)
 f0.suptitle("Fourier Series Approximation")
@@ -39,7 +39,6 @@ def updateData(frame):
     waveform = coeffs[:frame,None]*eigenfunctions[:frame]
 
     waveform = np.sum(waveform, axis=0)
-    print(f"max = {np.max(np.abs(waveform))}")
     ifd_plot.set_data(x, waveform)
     ax[0].title.set_text([frame])
     return  ifd_plot,
