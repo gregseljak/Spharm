@@ -7,8 +7,31 @@ res = 1000
 pi = 3.14159
 x = np.linspace(0, 1, res)
 
+###################################################
+###                    README                   ###
+### ------------------------------------------- ###
+### Companion piece for harmonics_vis.py, to    ###
+### motivate the use of infinite sums of        ###
+### eigenfunctions in approaching a function on ###
+### a finite interval.                          ###
+###                                             ###
+### change the definition of f(x) to change the ###
+### arbitrary function you wish to model.       ###
+### The animation shows the sum of the first n  ###
+### fourier series terms.                       ###
+###################################################
+
 def f(x):
-    return 1-x+2*x**2
+    """ 
+    the function to be approximated:
+        it can be any (square-integrable) function!
+        Discontinuities are not a problem.
+    """
+    f_base = np.exp(x)
+    f_base[400:650] = 2
+    return f_base
+    #return 1-0.8*np.cos(x**2)
+    
 y = f(x)
 
 maxrange = 100
@@ -24,7 +47,10 @@ ax[0].set_title('True Value')
 ax[1].set_title('Approximation')
 ax[0].set_xlim(0, 1)
 ax[1].set_xlim(0,1)
-ax[1].set_ylim(0,50)
+axd = np.max(y)-np.min(y)
+plot_margin = 0.15
+ax[0].set_ylim(np.min(y)-plot_margin*axd, np.max(y)+plot_margin*axd)
+ax[1].set_ylim(np.min(y)-plot_margin*axd, np.max(y)+plot_margin*axd)
 
 
 # Initializing plots:
