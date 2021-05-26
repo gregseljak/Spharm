@@ -103,8 +103,6 @@ class FieldGenerator(object):
                 print(f" l: {l} || m: {m}")
                 field = np.zeros((self.y_ind, self.x_ind), dtype=complex)
                 for j in range(self.x_ind):
-                    if self.coeffs[l][m_i] == 0:
-                        continue
                     for k in range (self.y_ind):
                         x = j
                         y = k
@@ -139,10 +137,7 @@ class FieldGenerator(object):
         fig.axes.get_yaxis().set_visible(False)
         carte = ax.imshow(np.real(self.film_reel[0,:,:]), alpha=0.8, cmap='seismic', vmin=np.min(np.real(self.film_reel)), vmax=np.max(np.real(self.film_reel)), interpolation="none")
 
-        def updateData(frame):
-            carte.set_array(np.real(self.film_reel[frame,:,:]))
-            ax.set_title(f" Radius = {int(6371*self.radii[frame])} / 6371 km")
-            return carte
+        
 
         anime = animation.FuncAnimation(f0, updateData, blit=False, frames=self.film_reel.shape[0], interval=1000, repeat=True)
         #f0.tight_layout()
