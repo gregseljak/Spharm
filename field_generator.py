@@ -10,7 +10,7 @@ from matplotlib import cm
 ###                                           ###
 ### The field can be manipulated through the  ###
 ### choice of coefficients in this list       ###
-### e.g. C(l=2, m=-1) = coeffs[2][2]          ###
+### e.g. C(l=3, m=-1) = coeffs[3][2]          ###
 ###                                           ###
 ########################## Greg Seljak, 2021  ###
 #################################################
@@ -26,8 +26,8 @@ coeffs = [[0],[0,1,1],[0,0,0,0,2],[0,0,0,0,0,0,0]]
 # without having to recompute the fields:        #
 #                                                #
 # >>> FG.coeffs = [[0.4], [0+2j,0.1,1]]          #
-# >>> FG.show_frame()                             #
-# >>> FG.depth_movie()                           #
+# >>> FG.show_frame()                            #
+# >>> FG.show_movie()                            #
 ##################################################
 #
 # N.B. To comply with scipy's convention, I follow 
@@ -38,10 +38,11 @@ coeffs = [[0],[0,1,1],[0,0,0,0,2],[0,0,0,0,0,0,0]]
 #
 ################################################
 
-FG = None
+
 def main():
     FG = FieldGenerator()
     FG.show_movie()
+    return FG
 
 class FieldGenerator(object):
 
@@ -129,8 +130,8 @@ class FieldGenerator(object):
     def show_frame(self, radius=1):
         self.show_field(self.generate_frame(radius))
 
-    def show_movie(self):
-        self.depth_movie(20)
+    def show_movie(self, nb_frames=20):
+        self.depth_movie(nb_frames)
         f0, ax = plt.subplots()
         fig = ax.imshow(self.world_img)
         fig.axes.get_xaxis().set_visible(False)
@@ -147,4 +148,4 @@ class FieldGenerator(object):
         plt.show()
         plt.close()
 if __name__ == "__main__":
-    main()
+    FG = main()
