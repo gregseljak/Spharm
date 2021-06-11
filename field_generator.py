@@ -14,16 +14,14 @@ from matplotlib import cm
 ###                                           ###
 ########################## Greg Seljak, 2021  ###
 #################################################
-coeffs = [[0],[0,1,1],[0,0,0,0,2],[0,0,0,0,0,0,0]]
+coeffs = [[0],[0,1,1]],[0,0,0,0,2],[0,0,0,0,0,0,0]]
 
-#%%
+
 ##################################################
 # You don't need to rerun the program each time! #
 # Run this file is in interactive console:       #
-#   $python3 -i harmonics_vis.py                 #
+#   $python3 -i field_generator.py               #
 #                                                #
-# Now you can manipulate and re-run the visuals  #
-# without having to recompute the fields:        #
 #                                                #
 # >>> FG.coeffs = [[0.4], [0+2j,0.1,1]]          #
 # >>> FG.show_frame()                            #
@@ -41,7 +39,9 @@ coeffs = [[0],[0,1,1],[0,0,0,0,2],[0,0,0,0,0,0,0]]
 
 def main():
     FG = FieldGenerator()
+
     FG.show_movie()
+
     return FG
 
 class FieldGenerator(object):
@@ -52,16 +52,45 @@ class FieldGenerator(object):
         self.coeffs = coeffs
         self.globalmax = 0
         self.globalmin = 0
-        self.generate_eigenfields()
+        try:
+            self.load_eigenfields()
+        except FileNotFoundError:
+            print( " ./fieldvalues.npz not found (normal for first-time setup)")
+            print( " Generating field values. This can take a while:")
+            self.generate_eigenfields()
+            self.save_eigenfields()
+    
+    def save_eigenfields(self):
+        
+        field_archive = []
+        for degree in self.eigenfields:
+            for field in degree:
+                field_archive.append(field)
+        np.savez("fieldvalues", field_archive)
 
-    def depth_movie(self, nb_frames):
+    def load_eigenfields(self):
+
+        field_archive = np.load("./fieldvalues.npz")['arr_0.npy']
+        self.eigenfields=[]
+        deg = np.sqrt(field_archive.shape[0])
+        if deg != int(deg):
+            print(f" Discrepancy; loaded file has nonsquare # of fields ({field_archive.shape[0]})")
+            return " error; corrupted ./fieldvalues.npz; Delete it and regenerate"
+        idx = 0
+        for l in range(int(deg)):
+            self.eigenfields.append([])
+            for m in range(2*l+1):
+                self.eigenfields[l].append(field_archive[idx])
+                idx += 1
+
+    def _depth_movie(self, nb_frames):
         self.radii = np.linspace(0.5, 1.5, nb_frames)
         film_reel = np.zeros((nb_frames, self.y_ind, self.x_ind), dtype=complex)
         for i in range(nb_frames):
             film_reel[i,:,:] = self.generate_frame(self.radii[i])
         self.film_reel = film_reel    
 
-    def ct_sp(self, x,y):
+    def _ct_sp(self, x,y):
         # Certainly the most difficult part of the project!
         x_hat = 2*x/self.x_ind - 1
         y_hat = -2*y/self.y_ind + 1
@@ -83,7 +112,8 @@ class FieldGenerator(object):
         fig.axes.get_yaxis().set_visible(False)
         plt.show()
 
-    def show_point(self, pointx, pointy):
+    def _show_point(self, pointx, pointy):
+        """ debug function """
         fig = plt.imshow(self.world_img)
         plt.scatter(pointx, pointy, s=5)
         plt.show()
@@ -101,13 +131,14 @@ class FieldGenerator(object):
                 eigenfields.append([])
             for m_i in range(len(self.coeffs[l])):
                 m = m_i - l
-                print(f" l: {l} || m: {m}")
+                print(f" l: {l} || m: {m}   ")
+                field = np.zeros((self.y_ind, self.x_ind), dtype=complex) + 10*l + m_i
                 field = np.zeros((self.y_ind, self.x_ind), dtype=complex)
                 for j in range(self.x_ind):
                     for k in range (self.y_ind):
                         x = j
                         y = k
-                        theta, phi = self.ct_sp(x,y)
+                        theta, phi = self._ct_sp(x,y)
                         field[k,j] = sph_harm(m,l, phi,theta)
                 np.nan_to_num(field, copy=False)
                 eigenfields[l].append(field)
@@ -131,7 +162,7 @@ class FieldGenerator(object):
         self.show_field(self.generate_frame(radius))
 
     def show_movie(self, nb_frames=20):
-        self.depth_movie(nb_frames)
+        self._depth_movie(nb_frames)
         f0, ax = plt.subplots()
         fig = ax.imshow(self.world_img)
         fig.axes.get_xaxis().set_visible(False)
